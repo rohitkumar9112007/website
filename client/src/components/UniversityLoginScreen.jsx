@@ -13,11 +13,12 @@ import {
   Award,
   Building,
   CheckCircle2,
-  ScanLine
+  ScanLine,
+  Download
 } from 'lucide-react';
 import { loginUser } from '../services/api';
 
-export default function UniversityLoginScreen({ onLoginSuccess }) {
+export default function UniversityLoginScreen({ onLoginSuccess, onInstallApp, isInstalled }) {
   const [universityId, setUniversityId] = useState('12109842');
   const [password, setPassword] = useState('lpu@123');
   const [captchaInput, setCaptchaInput] = useState('7K9P');
@@ -288,6 +289,28 @@ export default function UniversityLoginScreen({ onLoginSuccess }) {
               </button>
             </div>
           </div>
+
+          {/* PWA Install Button on Login Screen */}
+          {!isInstalled && onInstallApp && (
+            <button
+              type="button"
+              onClick={onInstallApp}
+              className="mt-3 w-full py-2.5 px-3.5 rounded-2xl bg-gradient-to-r from-orange-600 via-orange-500 to-amber-500 hover:from-orange-500 hover:to-amber-400 text-white font-bold text-xs flex items-center justify-between shadow-lg shadow-orange-500/25 active:scale-98 transition cursor-pointer"
+            >
+              <div className="flex items-center gap-2.5 text-left">
+                <div className="w-7 h-7 rounded-lg bg-white/20 flex items-center justify-center">
+                  <Download className="w-4 h-4 text-white" />
+                </div>
+                <div>
+                  <div className="text-xs font-extrabold leading-tight">Install LPU Campus Hub App</div>
+                  <div className="text-[10px] text-white/80">Add to Home Screen for fast offline access</div>
+                </div>
+              </div>
+              <span className="text-[10px] uppercase tracking-wider bg-white/20 px-2.5 py-1 rounded-lg font-extrabold hover:bg-white/30 transition">
+                Install
+              </span>
+            </button>
+          )}
         </div>
       </div>
     </div>

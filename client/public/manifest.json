@@ -1,5 +1,5 @@
 {
-  "id": "/lpu-campus-hub",
+  "id": "/",
   "name": "LPU Campus Hub - Lovely Professional University",
   "short_name": "LPU Hub",
   "description": "All-in-one student super-app for Lovely Professional University: attendance calculator, today's timetable, mess & laundry scanners, RMS, exams and fee statements.",
@@ -18,6 +18,12 @@
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
     },
     {
       "src": "/icons/icon-512.png",

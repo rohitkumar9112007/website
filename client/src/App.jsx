@@ -25,6 +25,7 @@ import DashboardModal from './components/DashboardModal';
 import YourDostFullChatModal from './components/YourDostFullChatModal';
 import LeftSidebarMenu from './components/LeftSidebarMenu';
 import UniversityLoginScreen from './components/UniversityLoginScreen';
+import InstallAppModal from './components/InstallAppModal';
 
 import {
   fetchMe,
@@ -75,7 +76,8 @@ export default function App() {
   const [isDark, setIsDark] = useState(true);
 
   // PWA states
-  const [deferredPrompt, setDeferredPrompt] = useState(null);
+  const [deferredPrompt, setDeferredPrompt] = useState(() => (typeof window !== 'undefined' ? window.deferredPrompt : null));
+  const [isInstallModalOpen, setIsInstallModalOpen] = useState(false);
   const [isInstalled, setIsInstalled] = useState(() => {
     if (typeof window === 'undefined') return false;
     return (
@@ -84,7 +86,7 @@ export default function App() {
     );
   });
   const [isOnline, setIsOnline] = useState(() => (typeof navigator !== 'undefined' ? navigator.onLine : true));
-  const [showInstallBanner, setShowInstallBanner] = useState(false);
+  const [showInstallBanner, setShowInstallBanner] = useState(() => !!(typeof window !== 'undefined' && window.deferredPrompt));
 
   // Modals state for ALL 15 features
   const [isCustomizerOpen, setIsCustomizerOpen] = useState(false);
@@ -140,46 +142,71 @@ export default function App() {
 
   // PWA Lifecycle and Offline Listeners
   useEffect(() => {
+    const syncPrompt = () => {
+      if (typeof window !== 'undefined' && window.deferredPrompt) {
+        setDeferredPrompt(window.deferredPrompt);
+        setShowInstallBanner(true);
+      }
+    };
+
+    // Check if prompt was captured early
+    syncPrompt();
+
     const handleBeforeInstall = (e) => {
       e.preventDefault();
+      window.deferredPrompt = e;
       setDeferredPrompt(e);
       setShowInstallBanner(true);
     };
 
     const handleAppInstalled = () => {
       setIsInstalled(true);
+      window.deferredPrompt = null;
       setDeferredPrompt(null);
       setShowInstallBanner(false);
+      setIsInstallModalOpen(false);
     };
 
     const handleOnline = () => setIsOnline(true);
     const handleOffline = () => setIsOnline(false);
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstall);
+    window.addEventListener('pwa-ready-to-install', syncPrompt);
     window.addEventListener('appinstalled', handleAppInstalled);
+    window.addEventListener('pwa-installed', handleAppInstalled);
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
 
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
+      window.removeEventListener('pwa-ready-to-install', syncPrompt);
       window.removeEventListener('appinstalled', handleAppInstalled);
+      window.removeEventListener('pwa-installed', handleAppInstalled);
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
     };
   }, []);
 
   const handleInstallApp = async () => {
-    if (deferredPrompt) {
-      deferredPrompt.prompt();
-      const { outcome } = await deferredPrompt.userChoice;
-      if (outcome === 'accepted') {
-        setIsInstalled(true);
+    const promptEvent = deferredPrompt || (typeof window !== 'undefined' ? window.deferredPrompt : null);
+    if (promptEvent && typeof promptEvent.prompt === 'function') {
+      try {
+        await promptEvent.prompt();
+        const choice = await promptEvent.userChoice;
+        if (choice && choice.outcome === 'accepted') {
+          setIsInstalled(true);
+        }
+        if (typeof window !== 'undefined') window.deferredPrompt = null;
+        setDeferredPrompt(null);
+        setShowInstallBanner(false);
+        setIsInstallModalOpen(false);
+        return;
+      } catch (err) {
+        console.warn('[PWA] Prompt error:', err);
       }
-      setDeferredPrompt(null);
-      setShowInstallBanner(false);
-    } else {
-      alert("📱 How to install LPU Campus Hub PWA:\n\n• On iOS (Safari): Tap the Share button ⎋, then scroll and tap 'Add to Home Screen' (+).\n• On Android (Chrome): Tap the 3-dots menu ⋮ and select 'Install app' or 'Add to Home screen'.\n• On Desktop (Chrome/Edge): Click the Install icon in the right side of the address bar.");
     }
+    // If native prompt is not yet ready or on Safari iOS, open the sleek interactive guide modal
+    setIsInstallModalOpen(true);
   };
 
   // Central Router for ALL tile clicks - every tile works!
@@ -272,7 +299,24 @@ export default function App() {
 
   // Require University ID & Password login
   if (!user) {
-    return <UniversityLoginScreen onLoginSuccess={handleLoginSuccess} />;
+    return (
+      <>
+        <UniversityLoginScreen
+          onLoginSuccess={handleLoginSuccess}
+          onInstallApp={handleInstallApp}
+          isInstalled={isInstalled}
+        />
+        <InstallAppModal
+          isOpen={isInstallModalOpen}
+          onClose={() => setIsInstallModalOpen(false)}
+          deferredPrompt={deferredPrompt || (typeof window !== 'undefined' ? window.deferredPrompt : null)}
+          onInstallSuccess={() => {
+            setIsInstalled(true);
+            setShowInstallBanner(false);
+          }}
+        />
+      </>
+    );
   }
 
   return (
@@ -887,6 +931,17 @@ export default function App() {
             </div>
           </div>
         )}
+
+        {/* Dedicated PWA Install Modal with device instructions and direct trigger */}
+        <InstallAppModal
+          isOpen={isInstallModalOpen}
+          onClose={() => setIsInstallModalOpen(false)}
+          deferredPrompt={deferredPrompt || (typeof window !== 'undefined' ? window.deferredPrompt : null)}
+          onInstallSuccess={() => {
+            setIsInstalled(true);
+            setShowInstallBanner(false);
+          }}
+        />
       </div>
     </div>
   );

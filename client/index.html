@@ -31,6 +31,26 @@
         font-family: 'JetBrains Mono', monospace;
       }
     </style>
+    <!-- Early PWA capture script: ensures beforeinstallprompt is never lost before React loads -->
+    <script>
+      window.deferredPrompt = null;
+      window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        window.deferredPrompt = e;
+        console.log('[PWA Init] Captured beforeinstallprompt event');
+        window.dispatchEvent(new CustomEvent('pwa-ready-to-install'));
+      });
+      window.addEventListener('appinstalled', () => {
+        console.log('[PWA Init] App installed successfully');
+        window.deferredPrompt = null;
+        window.dispatchEvent(new CustomEvent('pwa-installed'));
+      });
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js', { scope: '/' })
+          .then((reg) => console.log('[PWA SW] Active scope:', reg.scope))
+          .catch((err) => console.warn('[PWA SW] Reg error:', err));
+      }
+    </script>
   </head>
   <body class="bg-slate-950 text-slate-100 antialiased selection:bg-orange-500 selection:text-white">
     <div id="root"></div>
