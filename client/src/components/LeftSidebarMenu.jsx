@@ -29,7 +29,8 @@ import {
   CreditCard,
   BookOpen,
   Download,
-  Smartphone
+  Smartphone,
+  MessageCircle
 } from 'lucide-react';
 
 export default function LeftSidebarMenu({
@@ -155,6 +156,23 @@ export default function LeftSidebarMenu({
               <span>LPU Hub PWA Installed</span>
             </div>
           )}
+
+          {/* Share on WhatsApp Button */}
+          <button
+            onClick={() => {
+              onClose();
+              const origin = typeof window !== 'undefined' ? window.location.origin : 'https://website-rohitkumar9112007s-projects.vercel.app';
+              const message = `🎓 *LPU Campus Hub — Student Super-App* 📲\n\nInstall the all-in-one student app for Lovely Professional University!\n\n✨ *Live Features:*\n📅 Today's Timetable & Lecture Rooms\n📊 75% Attendance & Safe Bunk Calculator\n🍽️ Mess QR Meal Scanner\n🧺 Laundry Bag Itemizer\n📝 RMS Grievance Tracker & Exam Datesheet\n\n👇 *Click to open & install on Android:* \n${origin}`;
+              window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`, '_blank');
+            }}
+            className="mt-2 w-full py-2 px-3 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-400 font-bold text-xs flex items-center justify-between transition cursor-pointer"
+          >
+            <div className="flex items-center gap-2">
+              <MessageCircle className="w-3.5 h-3.5 fill-emerald-400" />
+              <span className="text-[11px]">Share on WhatsApp</span>
+            </div>
+            <span className="text-[9px] bg-emerald-500/20 px-2 py-0.5 rounded font-extrabold text-emerald-300">Invite</span>
+          </button>
         </div>
 
         {/* Feature Navigation List */}

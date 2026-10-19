@@ -10,7 +10,10 @@ import {
   Laptop,
   MoreVertical,
   Layers,
-  Sparkles
+  Sparkles,
+  MessageCircle,
+  Copy,
+  Check
 } from 'lucide-react';
 
 export default function InstallAppModal({
@@ -23,6 +26,7 @@ export default function InstallAppModal({
 
   const [platform, setPlatform] = useState('android');
   const [hasPrompt, setHasPrompt] = useState(!!(deferredPrompt || window.deferredPrompt));
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     const ua = navigator.userAgent || '';
@@ -57,6 +61,12 @@ export default function InstallAppModal({
         console.warn('Native prompt error:', err);
       }
     }
+  };
+
+  const handleShareWhatsApp = () => {
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://website-rohitkumar9112007s-projects.vercel.app';
+    const message = `🎓 *LPU Campus Hub — Student Super-App* 📲\n\nInstall the all-in-one student app for Lovely Professional University!\n\n✨ *Key Features:*\n📅 Today's Timetable & Room Numbers\n📊 75% Attendance Rule & Safe Bunk Calculator\n🍽️ Hostel Mess QR Entry Scanner\n🧺 Laundry Bag Itemizer (Jeans, Shirts & Lowers)\n📝 RMS Grievance Tracker & Exam Datesheet\n\n👇 *Click to open & install directly on Android:* \n${origin}`;
+    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`, '_blank');
   };
 
   return (
@@ -228,6 +238,45 @@ export default function InstallAppModal({
               </div>
             </div>
           )}
+
+          {/* Share on WhatsApp & Copy Link for Android Friends */}
+          <div className="p-3.5 rounded-2xl bg-gradient-to-r from-emerald-950/50 via-slate-900 to-emerald-950/30 border border-emerald-500/35 space-y-2.5">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5 text-xs font-black text-emerald-400">
+                <MessageCircle className="w-4 h-4 fill-emerald-400/30 text-emerald-400" />
+                <span>Share Android Install Link on WhatsApp</span>
+              </div>
+              <span className="text-[9px] text-emerald-300 font-extrabold bg-emerald-500/20 px-2 py-0.5 rounded-full border border-emerald-500/30">
+                1-Tap Install
+              </span>
+            </div>
+            <p className="text-[11px] text-slate-300 leading-snug">
+              Share this link directly into your class or hostel WhatsApp groups so any Android student can install LPU Campus Hub instantly.
+            </p>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleShareWhatsApp}
+                className="flex-1 py-2.5 px-3 rounded-xl bg-[#25D366] hover:bg-[#20bd5a] text-slate-950 font-black text-xs flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/25 active:scale-98 transition cursor-pointer"
+              >
+                <MessageCircle className="w-4 h-4 fill-slate-950 text-slate-950" />
+                <span>Share to WhatsApp</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const origin = typeof window !== 'undefined' ? window.location.origin : 'https://website-rohitkumar9112007s-projects.vercel.app';
+                  navigator.clipboard.writeText(origin);
+                  setCopied(true);
+                  setTimeout(() => setCopied(false), 2000);
+                }}
+                className="py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs flex items-center justify-center gap-1.5 transition cursor-pointer flex-shrink-0"
+              >
+                {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                <span>{copied ? 'Copied!' : 'Copy Link'}</span>
+              </button>
+            </div>
+          </div>
 
         </div>
 
