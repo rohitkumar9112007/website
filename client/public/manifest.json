@@ -1,0 +1,16 @@
+{
+  "short_name": "LPU Hub",
+  "name": "LPU Campus Hub - Lovely Professional University",
+  "icons": [
+    {
+      "src": "/logo.svg",
+      "type": "image/svg+xml",
+      "sizes": "192x192 512x512"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#0b0f19",
+  "theme_color": "#f37021",
+  "display": "standalone",
+  "orientation": "portrait"
+}

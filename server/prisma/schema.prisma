@@ -1,0 +1,446 @@
+// Prisma Schema for LPU Campus Hub
+// Database: PostgreSQL with Prisma ORM
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  STUDENT
+  HOSTELLER
+  FACULTY
+  ADMIN
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  DUTY_LEAVE
+  NOT_MARKED
+}
+
+enum SubmissionStatus {
+  PENDING
+  SUBMITTED
+  LATE
+  GRADED
+}
+
+enum ExamType {
+  CA
+  MTE
+  ETE
+  PRACTICAL
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  OVERDUE
+}
+
+enum AnnouncementCategory {
+  ACADEMIC
+  EXAM
+  HOSTEL
+  EVENTS
+  URGENT
+}
+
+enum LeaveStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+enum RMSStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+enum LaundryStatus {
+  SUBMITTED
+  WASHING
+  READY_FOR_PICKUP
+  COLLECTED
+}
+
+enum LostFoundStatus {
+  OPEN
+  CLAIMED
+  RETURNED
+}
+
+// 1. User Account & Auth
+model User {
+  id           String        @id @default(uuid())
+  regNo        String        @unique // e.g. 12109842 or F18902
+  email        String        @unique
+  passwordHash String
+  name         String
+  phone        String?
+  role         Role          @default(STUDENT)
+  avatarUrl    String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  student      Student?
+  faculty      Faculty?
+  notifications Notification[]
+  tileConfig   TileConfig?
+  rmsRequests  RMSRequest[]
+  leaveRequests LeaveRequest[]
+  lostFoundItems LostFoundItem[]
+  claims       Claim[]
+  feedbackResponses FeedbackResponse[]
+  eventRSVPs   EventRSVP[]
+}
+
+// 2. Student Profile (Day Scholar / Hosteller)
+model Student {
+  id             String         @id @default(uuid())
+  userId         String         @unique
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  program        String         // e.g. B.Tech Computer Science & Engineering
+  section        String         // e.g. K21KR
+  semester       Int            @default(6)
+  cgpa           Float          @default(8.42)
+  isHosteller    Boolean        @default(false)
+  hostelBlock    String?        // e.g. Boys Hostel 4 (BH-4)
+  roomNo         String?        // e.g. 412-B
+  busRoute       String?        // Day Scholar bus route (e.g. Route 7)
+  mentorName     String?
+
+  enrollments    Enrollment[]
+  attendanceRecords AttendanceRecord[]
+  submissions    Submission[]
+  marks          Mark[]
+  fees           Fee[]
+  messScans      MessScan[]
+  laundryOrders  LaundryOrder[]
+}
+
+// 3. Faculty Profile
+model Faculty {
+  id             String         @id @default(uuid())
+  userId         String         @unique
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  department     String         // e.g. School of Computer Science & Engineering
+  designation    String         // e.g. Associate Professor
+  cabin          String         // e.g. 34-601A
+
+  taughtCourses  Course[]
+  timetableSlots TimetableSlot[]
+  assignments    Assignment[]
+}
+
+// 4. Course
+model Course {
+  id             String         @id @default(uuid())
+  code           String         @unique // e.g. MTH165, MEC136
+  title          String         // e.g. Engineering Mathematics-II
+  credits        Int            @default(4)
+  facultyId      String
+  faculty        Faculty        @relation(fields: [facultyId], references: [id])
+
+  enrollments    Enrollment[]
+  timetableSlots TimetableSlot[]
+  attendanceRecords AttendanceRecord[]
+  assignments    Assignment[]
+  exams          Exam[]
+  feedbackForms  FeedbackForm[]
+}
+
+// 5. Enrollment
+model Enrollment {
+  id             String         @id @default(uuid())
+  studentId      String
+  student        Student        @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  courseId       String
+  course         Course         @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  createdAt      DateTime       @default(now())
+
+  @@unique([studentId, courseId])
+}
+
+// 6. TimetableSlot
+model TimetableSlot {
+  id             String         @id @default(uuid())
+  courseId       String
+  course         Course         @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  facultyId      String
+  faculty        Faculty        @relation(fields: [facultyId], references: [id])
+  dayOfWeek      Int            // 1 (Mon) - 6 (Sat)
+  startTime      String         // e.g. "09:20"
+  endTime        String         // e.g. "10:10"
+  room           String         // e.g. "37-703" or "28-503"
+  isCancelled    Boolean        @default(false)
+  rescheduledTo  String?
+}
+
+// 7. AttendanceRecord
+model AttendanceRecord {
+  id             String           @id @default(uuid())
+  studentId      String
+  student        Student          @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  courseId       String
+  course         Course           @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  date           DateTime
+  slot           String           // e.g. "09:20-10:10"
+  status         AttendanceStatus @default(PRESENT)
+  markedBy       String?          // Faculty ID
+  markedAt       DateTime         @default(now())
+}
+
+// 8. Assignment
+model Assignment {
+  id             String         @id @default(uuid())
+  courseId       String
+  course         Course         @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  facultyId      String
+  faculty        Faculty        @relation(fields: [facultyId], references: [id])
+  title          String
+  description    String
+  dueDate        DateTime
+  maxMarks       Int            @default(100)
+  submissions    Submission[]
+  createdAt      DateTime       @default(now())
+}
+
+// 9. Submission
+model Submission {
+  id             String           @id @default(uuid())
+  assignmentId   String
+  assignment     Assignment       @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  studentId      String
+  student        Student          @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  fileUrl        String?
+  submissionDate DateTime         @default(now())
+  status         SubmissionStatus @default(SUBMITTED)
+  score          Float?
+  feedback       String?
+}
+
+// 10. Exam
+model Exam {
+  id             String         @id @default(uuid())
+  courseId       String
+  course         Course         @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  type           ExamType       @default(MTE)
+  date           DateTime
+  timeSlot       String         // e.g. "09:30 - 12:30"
+  room           String         // e.g. "Block 38, Room 402"
+  reportingTime  String         // e.g. "09:00 AM"
+  marks          Mark[]
+}
+
+// 11. Mark
+model Mark {
+  id             String         @id @default(uuid())
+  studentId      String
+  student        Student        @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  examId         String
+  exam           Exam           @relation(fields: [examId], references: [id], onDelete: Cascade)
+  obtainedMarks  Float
+  totalMarks     Float          @default(100)
+  grade          String?        // e.g. "A+", "A", "B+"
+}
+
+// 12. Fee
+model Fee {
+  id             String         @id @default(uuid())
+  studentId      String
+  student        Student        @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  title          String         // e.g. "Academic Tuition Fee - Sem 6"
+  amount         Float
+  dueDate        DateTime
+  status         PaymentStatus  @default(PENDING)
+  payments       Payment[]
+}
+
+// 13. Payment
+model Payment {
+  id             String         @id @default(uuid())
+  feeId          String
+  fee            Fee            @relation(fields: [feeId], references: [id], onDelete: Cascade)
+  amount         Float
+  txnReference   String         @unique
+  method         String         // e.g. UPI, NetBanking, Debit Card
+  paidAt         DateTime       @default(now())
+  receiptPdfUrl  String?
+}
+
+// 14. Announcement
+model Announcement {
+  id             String               @id @default(uuid())
+  title          String
+  content        String
+  category       AnnouncementCategory @default(ACADEMIC)
+  authorName     String
+  isPinned       Boolean              @default(false)
+  createdAt      DateTime             @default(now())
+}
+
+// 15. Notification
+model Notification {
+  id             String         @id @default(uuid())
+  userId         String
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title          String
+  body           String
+  isRead         Boolean        @default(false)
+  linkUrl        String?
+  createdAt      DateTime       @default(now())
+}
+
+// 16. Event
+model Event {
+  id             String         @id @default(uuid())
+  title          String         // e.g. "One World Cultural Fest 2026"
+  description    String
+  venue          String         // e.g. "Shanti Devi Mittal Auditorium"
+  date           DateTime
+  category       String         // e.g. "Cultural", "Tech Fest", "Guest Lecture"
+  rsvps          EventRSVP[]
+}
+
+// 17. EventRSVP
+model EventRSVP {
+  id             String         @id @default(uuid())
+  eventId        String
+  event          Event          @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  checkedIn      Boolean        @default(false)
+  createdAt      DateTime       @default(now())
+}
+
+// 18. LeaveRequest
+model LeaveRequest {
+  id             String         @id @default(uuid())
+  userId         String
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reason         String
+  startDate      DateTime
+  endDate        DateTime
+  attachmentUrl  String?
+  status         LeaveStatus    @default(PENDING)
+  gatePassCode   String?        // Auto-generated 6-digit gate code upon approval
+  createdAt      DateTime       @default(now())
+}
+
+// 19. RMSRequest (Request Management System)
+model RMSRequest {
+  id             String         @id @default(uuid())
+  userId         String
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category       String         // e.g. "Hostel Maintenance", "Fee Query", "Exam Cell"
+  subject        String
+  description    String
+  photoUrl       String?
+  status         RMSStatus      @default(OPEN)
+  slaDeadline    DateTime
+  rating         Int?           // 1 - 5 stars after resolution
+  feedback       String?
+  updates        RMSUpdate[]
+  createdAt      DateTime       @default(now())
+}
+
+// 20. RMSUpdate
+model RMSUpdate {
+  id             String         @id @default(uuid())
+  requestId      String
+  request        RMSRequest     @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  comment        String
+  officerName    String
+  createdAt      DateTime       @default(now())
+}
+
+// 21. FeedbackForm
+model FeedbackForm {
+  id             String         @id @default(uuid())
+  courseId       String
+  course         Course         @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  title          String         // e.g. "Practical Lab Feedback - Mid Term"
+  responses      FeedbackResponse[]
+}
+
+// 22. FeedbackResponse
+model FeedbackResponse {
+  id             String         @id @default(uuid())
+  formId         String
+  form           FeedbackForm   @relation(fields: [formId], references: [id], onDelete: Cascade)
+  userId         String?        // Null if anonymous
+  user           User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
+  isAnonymous    Boolean        @default(true)
+  ratings        String         // JSON string of rating dimensions
+  comments       String?
+  createdAt      DateTime       @default(now())
+}
+
+// 23. MessScan (Hostellers Only)
+model MessScan {
+  id             String         @id @default(uuid())
+  studentId      String
+  student        Student        @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  mealType       String         // "Breakfast", "Lunch", "Snacks", "Dinner"
+  scannedAt      DateTime       @default(now())
+  verifiedBy     String         // Mess counter identifier
+}
+
+// 24. LaundryOrder (Hostellers Only)
+model LaundryOrder {
+  id             String         @id @default(uuid())
+  studentId      String
+  student        Student        @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  itemCount      Int
+  status         LaundryStatus  @default(SUBMITTED)
+  dropDate       DateTime       @default(now())
+  pickupDate     DateTime?
+}
+
+// 25. LostFoundItem
+model LostFoundItem {
+  id             String          @id @default(uuid())
+  userId         String
+  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type           String          // "LOST" or "FOUND"
+  title          String
+  description    String
+  location       String          // e.g. "Central Library 3rd Floor"
+  photoUrl       String?
+  status         LostFoundStatus @default(OPEN)
+  date           DateTime
+  claims         Claim[]
+  createdAt      DateTime        @default(now())
+}
+
+// 26. Claim
+model Claim {
+  id             String         @id @default(uuid())
+  itemId         String
+  item           LostFoundItem  @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  claimerId      String
+  claimer        User           @relation(fields: [claimerId], references: [id], onDelete: Cascade)
+  proofDesc      String
+  status         String         @default("PENDING") // PENDING, VERIFIED, REJECTED
+  createdAt      DateTime       @default(now())
+}
+
+// 27. TileConfig (Custom tile order and visibility per user)
+model TileConfig {
+  id             String         @id @default(uuid())
+  userId         String         @unique
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  enabledTiles   String         // JSON array of tile IDs e.g. ["timetable","attendance","exam",...]
+  tileOrder      String         // JSON array of tile IDs
+  updatedAt      DateTime       @updatedAt
+}

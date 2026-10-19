@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <defs>
+    <linearGradient id="lpuGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF7A00" />
+      <stop offset="100%" stop-color="#F37021" />
+    </linearGradient>
+    <linearGradient id="navyGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0B192C" />
+      <stop offset="100%" stop-color="#1E3E62" />
+    </linearGradient>
+  </defs>
+  <rect width="100" height="100" rx="24" fill="url(#navyGrad)" />
+  <circle cx="50" cy="50" r="38" stroke="url(#lpuGrad)" stroke-width="3" fill="none" opacity="0.4" />
+  <!-- Graduation cap & university crest inspired mark -->
+  <path d="M50 24L76 37L50 50L24 37Z" fill="url(#lpuGrad)" />
+  <path d="M72 42V56C72 56 64 68 50 68C36 68 28 56 28 56V42L50 53L72 42Z" fill="#FFFFFF" fill-opacity="0.9" />
+  <circle cx="50" cy="74" r="4" fill="url(#lpuGrad)" />
+  <path d="M78 37V62" stroke="url(#lpuGrad)" stroke-width="2.5" stroke-linecap="round" />
+</svg>

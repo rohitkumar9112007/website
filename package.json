@@ -1,0 +1,19 @@
+{
+  "name": "lpu-campus-hub",
+  "version": "1.0.0",
+  "description": "LPU Campus Hub - Mobile-first student super-app for Lovely Professional University",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node server/src/server.js",
+    "server": "node server/src/server.js",
+    "client": "npm --prefix client run dev",
+    "test": "npm --prefix server test",
+    "build": "npm --prefix client install && npm --prefix client run build",
+    "vercel-build": "npm --prefix client install && npm --prefix client run build"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.2"
+  }
+}
