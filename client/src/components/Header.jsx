@@ -12,7 +12,8 @@ import {
   Home,
   CalendarDays,
   Grid,
-  Search
+  Search,
+  Download
 } from 'lucide-react';
 
 export default function Header({
@@ -25,7 +26,9 @@ export default function Header({
   onToggleTheme,
   onLogout,
   activeTab = 'home',
-  onSelectTab
+  onSelectTab,
+  onInstallApp,
+  isInstalled
 }) {
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -109,6 +112,18 @@ export default function Header({
 
         {/* Action icons & user profile on desktop */}
         <div className="flex items-center gap-1.5 md:gap-2">
+          {!isInstalled && onInstallApp && (
+            <button
+              onClick={onInstallApp}
+              className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 h-8 md:h-9 rounded-lg bg-gradient-to-r from-orange-600 to-amber-500 hover:from-orange-500 hover:to-amber-400 text-white text-xs font-bold shadow-md shadow-orange-500/20 active:scale-95 transition cursor-pointer"
+              title="Install LPU Hub Progressive Web App (PWA)"
+              id="btn-install-pwa-header"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span>Install App</span>
+            </button>
+          )}
+
           <button
             onClick={onToggleTheme}
             className="w-8 h-8 md:w-9 md:h-9 rounded-lg bg-slate-800/80 hover:bg-slate-700/80 text-slate-300 flex items-center justify-center transition border border-slate-700/50"

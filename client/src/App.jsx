@@ -52,7 +52,10 @@ import {
   Receipt,
   ScanLine,
   QrCode,
-  Power
+  Power,
+  WifiOff,
+  Download,
+  X
 } from 'lucide-react';
 
 export default function App() {
@@ -70,6 +73,18 @@ export default function App() {
   const [enabledTiles, setEnabledTiles] = useState([]);
   const [activeTab, setActiveTab] = useState('home');
   const [isDark, setIsDark] = useState(true);
+
+  // PWA states
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
+  const [isInstalled, setIsInstalled] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return (
+      window.matchMedia('(display-mode: standalone)').matches ||
+      window.navigator.standalone === true
+    );
+  });
+  const [isOnline, setIsOnline] = useState(() => (typeof navigator !== 'undefined' ? navigator.onLine : true));
+  const [showInstallBanner, setShowInstallBanner] = useState(false);
 
   // Modals state for ALL 15 features
   const [isCustomizerOpen, setIsCustomizerOpen] = useState(false);
@@ -121,6 +136,50 @@ export default function App() {
     localStorage.removeItem('lpu_hub_user');
     setUser(null);
     setIsLeftMenuOpen(false);
+  };
+
+  // PWA Lifecycle and Offline Listeners
+  useEffect(() => {
+    const handleBeforeInstall = (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setShowInstallBanner(true);
+    };
+
+    const handleAppInstalled = () => {
+      setIsInstalled(true);
+      setDeferredPrompt(null);
+      setShowInstallBanner(false);
+    };
+
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstall);
+    window.addEventListener('appinstalled', handleAppInstalled);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
+      window.removeEventListener('appinstalled', handleAppInstalled);
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  const handleInstallApp = async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') {
+        setIsInstalled(true);
+      }
+      setDeferredPrompt(null);
+      setShowInstallBanner(false);
+    } else {
+      alert("📱 How to install LPU Campus Hub PWA:\n\n• On iOS (Safari): Tap the Share button ⎋, then scroll and tap 'Add to Home Screen' (+).\n• On Android (Chrome): Tap the 3-dots menu ⋮ and select 'Install app' or 'Add to Home screen'.\n• On Desktop (Chrome/Edge): Click the Install icon in the right side of the address bar.");
+    }
   };
 
   // Central Router for ALL tile clicks - every tile works!
@@ -221,6 +280,14 @@ export default function App() {
       {/* Responsive Viewport Container: Mobile (max-w-md) & PC Desktop (max-w-7xl) */}
       <div className="w-full max-w-md md:max-w-4xl lg:max-w-6xl xl:max-w-7xl min-h-screen flex flex-col bg-slate-950 md:border-x border-slate-800 shadow-2xl relative pb-20 md:pb-8">
         
+        {/* Offline Status Bar when disconnected */}
+        {!isOnline && (
+          <div className="bg-amber-600/95 text-slate-950 px-4 py-1.5 text-xs font-bold text-center flex items-center justify-center gap-2 z-40 sticky top-0 shadow backdrop-blur-sm">
+            <WifiOff className="w-3.5 h-3.5" />
+            <span>Offline Mode Active • Showing cached student timetable & local offline data</span>
+          </div>
+        )}
+
         {/* Top Header with Desktop Navigation Bar */}
         <Header
           user={user}
@@ -233,6 +300,8 @@ export default function App() {
           onLogout={handleLogout}
           activeTab={activeTab}
           onSelectTab={(tab) => setActiveTab(tab)}
+          onInstallApp={handleInstallApp}
+          isInstalled={isInstalled}
         />
 
         {/* Top-Left Side Navigation Drawer */}
@@ -251,6 +320,9 @@ export default function App() {
             setIsLeftMenuOpen(false);
             setIsRoleSwitcherOpen(true);
           }}
+          onInstallApp={handleInstallApp}
+          canInstall={!!deferredPrompt}
+          isInstalled={isInstalled}
         />
 
         {/* TAB 1: HOME */}
@@ -781,6 +853,36 @@ export default function App() {
                 className="mt-4 w-full py-2 rounded-xl bg-orange-500 text-white font-bold text-xs"
               >
                 Close
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Floating PWA Install Notification Banner */}
+        {showInstallBanner && !isInstalled && (
+          <div className="fixed bottom-20 md:bottom-6 right-4 left-4 md:left-auto md:w-96 z-40 p-3.5 bg-slate-900/95 border border-orange-500/40 rounded-2xl shadow-2xl backdrop-blur-md animate-slideUp flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-slate-950 to-slate-900 border border-orange-500/30 p-1.5 flex items-center justify-center flex-shrink-0">
+                <img src="/logo.svg" alt="LPU Logo" className="w-full h-full object-contain" />
+              </div>
+              <div>
+                <h4 className="text-xs font-extrabold text-white">Install LPU Hub PWA</h4>
+                <p className="text-[10px] text-slate-400">1-tap home screen app & offline timetable</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-1.5 flex-shrink-0">
+              <button
+                onClick={handleInstallApp}
+                className="px-3 py-1.5 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white text-[11px] font-bold rounded-lg shadow-md active:scale-95 transition cursor-pointer"
+              >
+                Install
+              </button>
+              <button
+                onClick={() => setShowInstallBanner(false)}
+                className="p-1 text-slate-400 hover:text-white transition cursor-pointer"
+                title="Dismiss"
+              >
+                <X className="w-4 h-4" />
               </button>
             </div>
           </div>

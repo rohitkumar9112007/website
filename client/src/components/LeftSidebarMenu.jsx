@@ -27,7 +27,9 @@ import {
   ShieldCheck,
   Building,
   CreditCard,
-  BookOpen
+  BookOpen,
+  Download,
+  Smartphone
 } from 'lucide-react';
 
 export default function LeftSidebarMenu({
@@ -38,7 +40,10 @@ export default function LeftSidebarMenu({
   isDark,
   onToggleTheme,
   onLogout,
-  onOpenRoleSwitcher
+  onOpenRoleSwitcher,
+  onInstallApp,
+  canInstall,
+  isInstalled
 }) {
   if (!isOpen) return null;
 
@@ -121,6 +126,35 @@ export default function LeftSidebarMenu({
               Switch Role ▾
             </button>
           </div>
+
+          {/* PWA Install Button */}
+          {!isInstalled ? (
+            <button
+              onClick={() => {
+                onClose();
+                if (onInstallApp) onInstallApp();
+              }}
+              className="mt-3 w-full py-2 px-3 rounded-xl bg-gradient-to-r from-orange-600 via-orange-500 to-amber-500 hover:from-orange-500 hover:to-amber-400 text-white font-bold text-xs flex items-center justify-between shadow-lg shadow-orange-500/25 active:scale-98 transition group cursor-pointer"
+            >
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded-lg bg-white/20 flex items-center justify-center">
+                  <Download className="w-3.5 h-3.5 text-white" />
+                </div>
+                <div className="text-left">
+                  <div className="text-[11px] font-bold leading-tight">Install LPU PWA</div>
+                  <div className="text-[9px] text-white/80">Add to Home Screen</div>
+                </div>
+              </div>
+              <span className="text-[9px] uppercase tracking-wider bg-white/20 px-2 py-0.5 rounded-md font-extrabold group-hover:bg-white/30 transition">
+                Install
+              </span>
+            </button>
+          ) : (
+            <div className="mt-3 py-1.5 px-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-bold flex items-center justify-center gap-1.5">
+              <Smartphone className="w-3.5 h-3.5" />
+              <span>LPU Hub PWA Installed</span>
+            </div>
+          )}
         </div>
 
         {/* Feature Navigation List */}
