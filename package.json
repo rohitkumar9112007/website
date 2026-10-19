@@ -9,8 +9,8 @@
     "server": "node server/src/server.js",
     "client": "npm --prefix client run dev",
     "test": "npm --prefix server test",
-    "build": "npm --prefix client install && npm --prefix client run build",
-    "vercel-build": "npm --prefix client install && npm --prefix client run build"
+    "build": "cd client && npm install && npm run build",
+    "vercel-build": "cd client && npm install && npm run build"
   },
   "dependencies": {
     "cors": "^2.8.5",
