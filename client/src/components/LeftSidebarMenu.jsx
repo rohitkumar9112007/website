@@ -161,7 +161,7 @@ export default function LeftSidebarMenu({
           <button
             onClick={() => {
               onClose();
-              const origin = typeof window !== 'undefined' ? window.location.origin : 'https://website-rohitkumar9112007s-projects.vercel.app';
+              const origin = typeof window !== 'undefined' ? window.location.origin : 'https://website-rohit-8419.vercel.app';
               const message = `🎓 *LPU Campus Hub — Student Super-App* 📲\n\nInstall the all-in-one student app for Lovely Professional University!\n\n✨ *Live Features:*\n📅 Today's Timetable & Lecture Rooms\n📊 75% Attendance & Safe Bunk Calculator\n🍽️ Mess QR Meal Scanner\n🧺 Laundry Bag Itemizer\n📝 RMS Grievance Tracker & Exam Datesheet\n\n👇 *Click to open & install on Android:* \n${origin}`;
               window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`, '_blank');
             }}

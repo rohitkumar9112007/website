@@ -64,7 +64,7 @@ export default function InstallAppModal({
   };
 
   const handleShareWhatsApp = () => {
-    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://website-rohitkumar9112007s-projects.vercel.app';
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://website-rohit-8419.vercel.app';
     const message = `🎓 *LPU Campus Hub — Student Super-App* 📲\n\nInstall the all-in-one student app for Lovely Professional University!\n\n✨ *Key Features:*\n📅 Today's Timetable & Room Numbers\n📊 75% Attendance Rule & Safe Bunk Calculator\n🍽️ Hostel Mess QR Entry Scanner\n🧺 Laundry Bag Itemizer (Jeans, Shirts & Lowers)\n📝 RMS Grievance Tracker & Exam Datesheet\n\n👇 *Click to open & install directly on Android:* \n${origin}`;
     window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`, '_blank');
   };
@@ -265,7 +265,7 @@ export default function InstallAppModal({
               <button
                 type="button"
                 onClick={() => {
-                  const origin = typeof window !== 'undefined' ? window.location.origin : 'https://website-rohitkumar9112007s-projects.vercel.app';
+                  const origin = typeof window !== 'undefined' ? window.location.origin : 'https://website-rohit-8419.vercel.app';
                   navigator.clipboard.writeText(origin);
                   setCopied(true);
                   setTimeout(() => setCopied(false), 2000);
